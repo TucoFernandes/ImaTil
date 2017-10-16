@@ -1,20 +1,19 @@
-<script type="text/javascript">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script><script type="text/javascript">
+    //The following section contains the java script functions for the polygon drawing tool
+    //Scrip based on code from....
     var perimeter = new Array();
     var complete = false;
     var canvas;
     var ctx;
-
     function line_intersects(p0, p1, p2, p3) {
         var s1_x, s1_y, s2_x, s2_y;
         s1_x = p1['x'] - p0['x'];
         s1_y = p1['y'] - p0['y'];
         s2_x = p3['x'] - p2['x'];
         s2_y = p3['y'] - p2['y'];
-
         var s, t;
         s = (-s1_y * (p0['x'] - p2['x']) + s1_x * (p0['y'] - p2['y'])) / (-s2_x * s1_y + s1_x * s2_y);
         t = ( s2_x * (p0['y'] - p2['y']) - s2_y * (p0['x'] - p2['x'])) / (-s2_x * s1_y + s1_x * s2_y);
-
         if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
         {
             // Collision detected
@@ -22,35 +21,32 @@
         }
         return false; // No collision
     }
-
     function point(x, y){
         ctx.fillStyle="white";
         ctx.strokeStyle = "white";
         ctx.fillRect(x-2,y-2,4,4);
         ctx.moveTo(x,y);
     }
-
     function undo(){
         ctx = undefined;
         perimeter.pop();
         complete = false;
+        $("#submitButton").attr("disabled", "disabled");
         start(true);
     }
-
     function clear_canvas(){
         ctx = undefined;
         perimeter = new Array();
         complete = false;
+        $("#submitButton").attr("disabled", "disabled");
         document.getElementById('coordinates').value = '';
         start();
     }
-
     function draw(end){
         ctx.lineWidth = 1;
         ctx.strokeStyle = "white";
         ctx.lineCap = "square";
         ctx.beginPath();
-
         for(var i=0; i<perimeter.length; i++){
             if(i==0){
                 ctx.moveTo(perimeter[i]['x'],perimeter[i]['y']);
@@ -67,9 +63,10 @@
             ctx.fill();
             ctx.strokeStyle = 'blue';
             complete = true;
+            // enable submit button and draw polygon
+            $("#submitButton").removeAttr("disabled");
         }
         ctx.stroke();
-
         // print coordinates
         if(perimeter.length == 0){
             document.getElementById('coordinates').value = '';
@@ -77,7 +74,6 @@
             document.getElementById('coordinates').value = JSON.stringify(perimeter);
         }
     }
-
     function check_intersect(x,y){
         if(perimeter.length < 4){
             return false;
@@ -86,12 +82,10 @@
         var p1 = new Array();
         var p2 = new Array();
         var p3 = new Array();
-
         p2['x'] = perimeter[perimeter.length-1]['x'];
         p2['y'] = perimeter[perimeter.length-1]['y'];
         p3['x'] = x;
         p3['y'] = y;
-
         for(var i=0; i<perimeter.length-1; i++){
             p0['x'] = perimeter[i]['x'];
             p0['y'] = perimeter[i]['y'];
@@ -105,15 +99,18 @@
         }
         return false;
     }
-
     function point_it(event) {
-        if(complete){
+        var rect, x, y;
+        if(event.ctrlKey){
+            //for faster undo use ctrl+click
+            undo();
+            return false;
+        } else if(complete){
             alert('Polygon already created');
             return false;
         }
-        var rect, x, y;
-
-        if(event.ctrlKey || event.which === 3 || event.button === 2){
+        else if(event.which === 3 || event.button === 2){
+            //atempt to close polygon 
             if(perimeter.length==2){
                 alert('You need at least three points for a polygon');
                 return false;
@@ -128,7 +125,7 @@
             alert('Polygon closed');
         event.preventDefault();
             return false;
-        } else {
+            }else {
             rect = canvas.getBoundingClientRect();
             x = event.clientX - rect.left;
             y = event.clientY - rect.top;
@@ -145,12 +142,10 @@
             return false;
         }
     }
-
     function start(with_draw) {
         canvas = document.getElementById("jPolygon");
         var img = new Image();
         img.src = canvas.getAttribute('data-imgsrc');
-
         img.onload = function(){
             canvas.width = img.width;
             canvas.height = img.height;
@@ -161,62 +156,69 @@
             }
         }
     }
+</script><!-- Beguining of the html document-->
+<div style="display:inline-block;vertical-align:top;">
+<h1>Draw a contour separating fish body from fins</h1>
+
+<ul>
+	<li>Please draw a contour using the <b>mouse left button</b> to click and connect points that <b>separate the fins from the body</b>.</li>
+    <li>To finish the contour polygon use the <b>mouse right button</b>. This command will connect the first to the last point.</li>
+    <li>Remove the last point by clicking <b>Ctrl +  mouse click</b> or click on the <b>Undo button.</b></li>
+    <li>Clear all points by clicking on the <b>Reset button</b></li>
+	<li>In order to get accepted there are <b>4 fins that need to be separated from the body</b>:</li>
+</ul>
+
+<blockquote><b><i>Dorsal fin / Pelvic fin / Anal fin / Caudal fin</i></b></blockquote>
+
+<ul>
+    <li>A good contour must be drawn <b>close to the fish body</b>, and use as many points as needed (on average 20 points is good).</li>
+    <li>In our last trial, we rejected many jobs that didn't follow the instructions.</br>
+    Please <b>take a look at the example figures</b> showing fish fins and an acceptable final polygon:
+    <a href="https://s3-us-west-2.amazonaws.com/fishpolygon1/fishExample1.jpg" target="_blank">Example 1 </a> 
+    <a href="https://s3-us-west-2.amazonaws.com/fishpolygon1/fishExample2.jpg" target="_blank">Example 2 </a> 
+    <a href="https://s3-us-west-2.amazonaws.com/fishpolygon1/fishExample3.jpg" target="_blank">Example 3</a> </br>
+    Also take a look at those <b>rejectable</b> answers:
+    <a href="https://s3-us-west-2.amazonaws.com/fishpolygon1/nottodoEx1.jpg" target="_blanck">Example 4</a>
+    <a href="https://s3-us-west-2.amazonaws.com/fishpolygon1/notToDoExample3.jpg" target="_blanck">Example 5</a>
+</li>
+</ul>
+
+<p id="buttons"><input id="undo_button" type="button" value="Undo" /> <input id="reset_button" type="Reset" value="Reset" /></p>
+
+<p><!-- Coordinates input from user --><!-- <strong>Coordinates:</strong> <textarea disabled="disabled" id="coordinates" name="coordinates" style="width:300px; height:200px;"></textarea> --><input id="coordinates" name="coordinates" type="hidden" /></p>
+</div>
+
+<div id="imgframe" style="float:left"><!--change the data-imgsrc="${img_url}" -->
+<p><canvas data-imgsrc="${img_url}" id="jPolygon" oncontextmenu="return false;" onmousedown="point_it(event)" style="cursor:crosshair"> Your browser does not support the HTML5 canvas tag. </canvas></p>
+</div>
+
+<div style="float:left; margin-left:20px;">
+<p><label for="comment"><em>Comment:</em></label><textarea id="comment_area" name="comment"></textarea></p>
+
+<p>Press <b>Left Click</b> to draw a point, <strong>CTRL+Click</strong> to undo or <strong>Right Click</strong> to close the polygon.</p>
+</div>
+<script type="text/javascript">
+       
+        $(document).ready(function(){
+            //create variables
+            
+            var perimeter = new Array();
+            var complete = false;
+            var canvas = document.getElementById("jPolygon");
+            var ctx;
+            var img = new Image();
+            img.src = canvas.getAttribute('data-imgsrc');
+            
+            clear_canvas();
+            //initialize butons
+            $("#reset_button").click(function(e) {
+                 clear_canvas();
+            });
+            $("#undo_button").click(function(e) {
+                 undo();
+            });
+            $("#submitButton").attr("disabled", "disabled");
+            $("#submitButton").detach().appendTo("#buttons");
+
+        });
 </script>
-
-
-<html>
-    <div style="display:inline-block;vertical-align:top;">
-    <h1>Draw lines separating fish body from fins as in the picture below</h1>
-    <p>
-        <li>To draw the line use the <strong>mouse left button</strong> to click and connect points
-        that separates the fins from the body.</li>
-        <li>To finish a line use the <strong>mouse left button</strong>.</li>
-        <li> You also have the opttions to undo a point, or clear all points.</li>
-        <li>  There are 4 fins that may need to be seapareted from the body: </li>
-        <blockquote>
-                <p> - Dorsal fin; </p>
-                <p> - Pelvic fin; </p>
-                <p> - Anal fin; </p>
-                <p> - Caudal fin; </p></blockquote>
-        <li>  To help you identifie those fins they are labeled on the example below. </li>
-    </p>
-    </div>
-
-    <div id="imgframe" style="float:left">
-        <!--change the data-imgsrc="${img_url}" -->
-        <canvas id="jPolygon" style="cursor:crosshair" data-imgsrc="https://s3.amazonaws.com/fishlateraltest/2062428.jpg" onmousedown="point_it(event)" oncontextmenu="return false;">
-                    Your browser does not support the HTML5 canvas tag.
-        </canvas>
-        <div style="float:left">
-            <p><strong>Coordinates:</strong> <!-- Coordinates input from user -->
-            <textarea id="coordinates" name="coordinates" disabled="disabled" style="width:300px; height:200px;"></textarea>
-            <input id="coordinates"  name="coordinates" type="hidden" />
-            </p>
-        </div>
-    </div>
-    <script type="text/javascript">
-    clear_canvas();
-    </script>
-
-    <div style="float:left; margin-left:20px;">
-        <div>       
-            <p>Press <strong>Left Click</strong> to draw a point.</p>
-            <p><strong>CTRL+Click</strong> or <strong>Right Click</strong> to close the polygon.</p>
-           
-            <button id="undo_button" type="Undo">Undo</button>
-            <button id="clear_button" type="Clear">Clear</button>
-              
-        </div>
-
-        <label for="comment"><em>Comment:</em></label><br />
-        <textarea id="comment_area" name="comment"></textarea>
-    </div>
-
-    <script>
-// Initialize buttons.
-  document.getElementById("undo_button").click(function(e) {
-   undo();
-  });
-    </script>
-</html>
-
